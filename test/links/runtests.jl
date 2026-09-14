@@ -109,8 +109,12 @@ Whether `url` answers with a status below 400, and the status or error behind th
 `HEAD` first: the body is never needed and one of these URLs is a multi-megabyte Parquet
 file. A server that refuses `HEAD` — 405, and a handful that answer 403 or 404 to it — is
 asked again with `GET`. Both are retried, so a slow host is not reported as a dead link.
+
+The `#fragment` is dropped before the request, as a browser does: it names a place in the
+page rather than the page, and some servers (GitHub Pages among them) answer 400 to it.
 """
 function reachable(url::AbstractString; follow::Bool=true, attempts::Int=3)
+    url = first(split(url, '#'; limit=2))
     detail = "no response"
     for attempt in 1:attempts
         attempt > 1 && sleep(5)

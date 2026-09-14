@@ -34,7 +34,7 @@ jobs:
             using Pkg
             Pkg.activate(; temp = true)
             Pkg.develop(PackageSpec(path = "."))
-            Pkg.add("DuckDB")
+            Pkg.add(["DuckDB", "Tables"])
             Pkg.instantiate()
             include("test/integration/runtests.jl")'
 
