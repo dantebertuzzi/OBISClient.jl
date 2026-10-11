@@ -21,6 +21,15 @@ OBISClient.fetched
 OBISClient.expected
 ```
 
+## Maps and bounding boxes
+
+```@docs
+OBISClient.occurrence_grid
+OBISClient.occurrence_points
+OBISClient.occurrence_centroid
+OBISClient.bbox
+```
+
 ## Taxa and checklists
 
 ```@docs

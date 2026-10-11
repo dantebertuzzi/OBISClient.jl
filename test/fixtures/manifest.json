@@ -143,5 +143,25 @@
         "name": "size_too_large",
         "status": 400,
         "file": "size_too_large.txt"
+    },
+    "https://api.obis.org/v3/occurrence/grid/2?scientificname=Abra%20alba": {
+        "status": 200,
+        "file": "occurrence_grid.json",
+        "name": "occurrence_grid"
+    },
+    "https://api.obis.org/v3/occurrence/points?scientificname=Abra%20alba&absence=true": {
+        "status": 200,
+        "file": "occurrence_points.json",
+        "name": "occurrence_points"
+    },
+    "https://api.obis.org/v3/occurrence/centroid?scientificname=Abra%20alba": {
+        "status": 200,
+        "file": "occurrence_centroid.json",
+        "name": "occurrence_centroid"
+    },
+    "https://api.obis.org/v3/occurrence/centroid?scientificname=Abra%20alba&startdate=2030-01-01": {
+        "status": 200,
+        "file": "occurrence_centroid_empty.txt",
+        "name": "occurrence_centroid_empty"
     }
 }

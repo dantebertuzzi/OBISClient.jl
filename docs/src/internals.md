@@ -71,6 +71,7 @@ OBISClient.build_params
 OBISClient.QueryParams
 OBISClient.selection_value
 OBISClient.validate_geometry
+OBISClient.spatial_params
 OBISClient.format_date
 OBISClient.validate_depth
 OBISClient.validate_uuid
@@ -122,5 +123,7 @@ OBISClient.DEFAULT_BASE_URL
 OBISClient.DEFAULT_EXPORT_URL
 OBISClient.REPO_URL
 OBISClient.MAX_PAGE_SIZE
+OBISClient.GRID_FEATURE_CAP
+OBISClient.GRID_PRECISIONS
 OBISClient.format_count
 ```

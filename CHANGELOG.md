@@ -8,6 +8,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `occurrence_grid`, `occurrence_points` and `occurrence_centroid`, for the server-side
+  aggregation endpoints `/occurrence/grid/{precision}`, `/occurrence/points` and
+  `/occurrence/centroid`. A map of a query of any size now costs one request instead of a
+  full pull. The grid comes back as an `OBISTable` with one row per geohash cell — bounds,
+  centre and record count — and the points as a table of longitudes and latitudes. The
+  endpoints ignore the `dropped` filter without saying so, return an empty grid for a
+  precision above 8, and cut results at 100,000 features silently; the client refuses
+  `dropped`, validates the precision and warns at the cap. The centroid is `nothing` when no
+  record matches, the case the endpoint answers with an empty body.
+- `bbox(west, south, east, north)`, which writes the WKT for a rectangle with its ring
+  closed, and splits a box that crosses the antimeridian into a `MULTIPOLYGON`.
+
 - `notebooks/getting-started.ipynb`, a Jupyter notebook that runs the client against the live
   API and is linked from the README by a badge that opens it in Google Colab, which supports
   Julia natively. It covers a first query, the result schema, the licences and citations

@@ -28,6 +28,12 @@ const REQUESTS = [
     "occurrence_name_not_found" => "occurrence?scientificname=Notaspecies%20atallxyz&size=3",
     "occurrence_single" => "occurrence/0001837f-afc5-45a9-a76d-b63ab73fb93c",
     "dataset_single" => "dataset/8acba7e7-2e50-4490-8328-b78a30472508",
+    "occurrence_grid" => "occurrence/grid/2?scientificname=Abra%20alba",
+    # Absences only: the full point set for Abra alba is close to a megabyte.
+    "occurrence_points" => "occurrence/points?scientificname=Abra%20alba&absence=true",
+    "occurrence_centroid" => "occurrence/centroid?scientificname=Abra%20alba",
+    # No record matches, which the endpoint answers with an empty body.
+    "occurrence_centroid_empty" => "occurrence/centroid?scientificname=Abra%20alba&startdate=2030-01-01",
     "statistics_abra" => "statistics?scientificname=Abra%20alba",
     "statistics_abra_absence" => "statistics?scientificname=Abra%20alba&absence=true",
     "statistics_mollusca" => "statistics?scientificname=Mollusca",
