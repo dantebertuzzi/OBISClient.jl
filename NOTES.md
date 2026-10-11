@@ -291,8 +291,9 @@ Lowercase produces no error. `flags=` silently returns an empty result set, and
 
 The manual's dataquality chapter displays flags in lowercase, because that is how a
 different download surface renders them. The API index stores them uppercase, matching
-the QC pipeline's own definitions. The client must normalize case before sending and
-reject unknown flag names outright.
+the QC pipeline's own definitions. The client normalizes case before sending. Unknown
+flag names are passed through with a warning rather than rejected, since no complete list
+exists to reject them against (§13); OBIS confirmed that approach in October 2026.
 
 ### 3.5 Canonical flag list
 
@@ -664,7 +665,9 @@ Two OBIS sources disagreed:
 - `iobis/obis-open-data`: "absence — Absence flag. Note that by default the OBIS
   webservices do not expose absence records, but they are included in this dataset."
 
-**`obis-open-data` is right and access.html is stale. (Observed.)** Six per-dataset export
+**`obis-open-data` is right and access.html is stale. (Observed, and confirmed by OBIS
+in October 2026: the absence records are in the exports deliberately, and
+[iobis/manual#127](https://github.com/iobis/manual/issues/127) tracks aligning the manual.)** Six per-dataset export
 files were read and their `absence` and `dropped` columns counted, then cross-checked
 against `/statistics` for the same dataset:
 
@@ -826,16 +829,13 @@ Recorded because they contradict assumptions that would otherwise reach the code
 
 ## 12. Open questions
 
-1. Is there a complete published enumeration of quality flags, including the
-   `WORMS_ANNOTATION_*` family? The facet truncates at 10 and the QC reference is
-   incomplete. (§3.5)
-2. Is `licenses.tsv` regenerated with each export, or is the 2025-04-17 timestamp its
+1. Is `licenses.tsv` regenerated with each export, or is the 2025-04-17 timestamp its
    current state? Determines whether it is usable as anything but a stale accelerator.
    (§6.3)
-3. Is there a documented request-rate expectation beyond "do not parallelize"? Worth
+2. Is there a documented request-rate expectation beyond "do not parallelize"? Worth
    asking so the default pacing can be set to something OBIS is comfortable with rather
    than to a guess.
-4. Does `size` behave identically on `/checklist` as on `/occurrence`, and does
+3. Does `size` behave identically on `/checklist` as on `/occurrence`, and does
    `/checklist` support `after`? Undocumented; only `size` was verified. (§2.2)
 
 ## 13. Answered since first writing
@@ -848,7 +848,12 @@ Recorded because they contradict assumptions that would otherwise reach the code
 - **The exports do contain absence and dropped records.** Counted in six export files and
   reconciled against `/statistics` dataset by dataset; every count matched, and each
   export's total was the API's default count plus them. access.html is stale on this
-  point. (§7.3)
+  point, and OBIS confirmed in October 2026 that the inclusion is deliberate;
+  [iobis/manual#127](https://github.com/iobis/manual/issues/127) aligns the manual. (§7.3)
+- **There is no complete published enumeration of quality flags.** Confirmed by OBIS in
+  October 2026: the facet endpoint is not an enumeration, and OBIS endorsed passing
+  unrecognized flags through with a warning, which is what `normalize_flag` does. A revision
+  of the QC system is planned, so `KNOWN_FLAGS` should be expected to drift. (§3.5)
 - **Parquet2.jl cannot read an OBIS export; DuckDB can.** Nested struct columns are
   unsupported by Parquet2 and everything the canonical schema needs lives under
   `interpreted`. (§7.4)

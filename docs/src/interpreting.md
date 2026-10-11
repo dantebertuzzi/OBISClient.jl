@@ -131,7 +131,8 @@ OBISClient.statistics("Abra alba"; absence = :include)["records"]   # both
 Absence records are excluded from the default view on either access route, and asked for
 with `absence = :include` or `:only`. OBIS's data access page says the Mapper downloads and
 the bulk export contain none at all; for the bulk export that is stale: the files do carry
-them, verified count for count against `/statistics` (NOTES.md §7.3), and
+them, verified count for count against `/statistics` (NOTES.md §7.3), and OBIS has confirmed
+they are there deliberately ([iobis/manual#127](https://github.com/iobis/manual/issues/127)), and
 [`OBISClient.read_export`](@ref) reads them with the same tri-state selection the API takes. The
 Mapper was not checked, so treat the page's statement about it as it stands.
 
