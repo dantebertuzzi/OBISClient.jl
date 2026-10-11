@@ -72,6 +72,16 @@ recs = OBISClient.occurrence(;
 )
 ```
 
+`OBISClient.bbox(2.0, 51.0, 4.5, 52.5)` writes the same rectangle without the hand-closed
+ring, and splits a box across the antimeridian into a `MULTIPOLYGON`.
+
+To map a query without retrieving it, OBIS aggregates on the server:
+
+```julia
+g = OBISClient.occurrence_grid("Abra alba"; precision = 3)   # records per geohash cell
+OBISClient.occurrence_centroid("Abra alba")                  # (longitude = …, latitude = …)
+```
+
 See [Getting started](https://dantebertuzzi.github.io/OBISClient.jl/stable/getting-started/)
 for the full filter set and the other endpoints.
 

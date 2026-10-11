@@ -160,6 +160,32 @@ not withhold what it does.
    after a commented-out path). It lists `scientificname` twice, and also `taxonid` and
    `taxonrank`.
 
+### 2.3 The spatial aggregation endpoints
+
+Probed on 2026-10-10.
+
+- **`/occurrence/grid/{precision}`** returns a GeoJSON `FeatureCollection` of square
+  `Polygon` cells, each with `properties.n`, the record count. Cells are geohash cells
+  (precision 2: 11.25° × 5.625°; precision 3: 1.40625° square). **(observed)**
+  - Precision 1–8 work. **Precision 0 is HTTP 500** with an Elasticsearch parse error, and
+    **precision 9 and above return an empty `features` array with HTTP 200** — the
+    silent-empty failure again, so the client validates the range.
+  - The counts honour the occurrence filters: the sum of `n` equals `/statistics.records`
+    for `scientificname` alone, with `startdate`, with `absence=true` and with
+    `flags=ON_LAND`.
+  - **`dropped` is ignored.** `dropped=include` sums to the default count (75,370, against
+    75,466 from `/statistics`), and `dropped=true` returns no cells at all, where
+    `/statistics` reports 96 records. The client refuses the keyword on these endpoints.
+  - Capped at 100,000 features with no indication of truncation: an unfiltered grid at
+    precision 5 returns exactly 100,000.
+- **`/occurrence/points`** returns a bare GeoJSON `MultiPoint` with no counts; one point
+  per occupied precision-8 geohash. Same filter behaviour, including ignoring `dropped`.
+- **`/occurrence/centroid`** returns `{"lat", "lon"}`. **When nothing matches, the body is
+  empty** (HTTP 200, zero bytes), which is not valid JSON; the client reads it as `nothing`.
+- All three report `NAME_NOT_FOUND` in the usual envelope for an unknown name.
+- `geometry` accepts `MULTIPOLYGON`: two halves of a box across the antimeridian
+  (170°E–180°, 180°–170°W) sum exactly to the `MULTIPOLYGON` of both.
+
 ## 3. Parameters
 
 ### 3.1 Naming

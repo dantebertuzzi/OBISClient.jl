@@ -273,21 +273,29 @@ function check_response(payload, endpoint::AbstractString, params::QueryParams)
 end
 
 """
-    api_get(endpoint; cfg, params...) -> JSON3 payload
+    api_get(endpoint, params; cfg, allow_empty = false) -> JSON3 payload
 
 Fetch and decode one API response, consulting the cache when one is configured.
 
 This is the single point every endpoint goes through, so caching, courtesy pacing and
 error interpretation apply uniformly.
+
+`allow_empty` returns `nothing` for an empty body instead of raising. Only
+`/occurrence/centroid` needs it: it answers a query that matches no records with an empty
+HTTP 200, where every other endpoint sends an empty result set.
 """
 function api_get(
-    endpoint::AbstractString, params::QueryParams=QueryParams(); cfg::ClientConfig=CONFIG
+    endpoint::AbstractString,
+    params::QueryParams=QueryParams();
+    cfg::ClientConfig=CONFIG,
+    allow_empty::Bool=false,
 )
     body = cached_body(cfg.cache, endpoint, params)
     if body === nothing
         body, headers = raw_request(endpoint, params; cfg=cfg)
         store_body!(cfg.cache, endpoint, params, body, headers)
     end
+    allow_empty && isempty(strip(body)) && return nothing
 
     payload = try
         JSON3.read(body)

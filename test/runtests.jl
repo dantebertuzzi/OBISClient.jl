@@ -33,6 +33,9 @@ include("mock.jl")
     @testset "other endpoints" begin
         include("test_endpoints.jl")
     end
+    @testset "spatial" begin
+        include("test_spatial.jl")
+    end
     @testset "cache" begin
         include("test_cache.jl")
     end

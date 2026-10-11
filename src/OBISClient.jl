@@ -61,6 +61,7 @@ include("occurrence.jl")
 include("dataset.jl")
 include("endpoints.jl")
 include("statistics.jl")
+include("spatial.jl")
 include("citation.jl")
 include("export.jl")
 
@@ -101,6 +102,7 @@ end
 
 # Queries.
 export occurrence, occurrence_pages, occurrence_by_id
+export occurrence_grid, occurrence_points, occurrence_centroid, bbox
 export checklist, checklist_redlist, checklist_newest
 export taxon, taxon_annotations
 export dataset, dataset_by_id, dataset_errors

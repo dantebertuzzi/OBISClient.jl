@@ -30,7 +30,9 @@ OBISClient.occurrence(; nodeid = "4bf79a01-65a9-4db6-b37b-18434f26ddfc", limit =
 OBISClient.occurrence(; instituteid = 6223, limit = 100)
 ```
 
-Build a polygon interactively at [wktmap.com](https://wktmap.com) if you do not have one.
+For a rectangle, `OBISClient.bbox(west, south, east, north)` writes the WKT and closes the
+ring; a box with `west > east` crosses the antimeridian and comes back as a `MULTIPOLYGON`.
+Build any other shape interactively at [wktmap.com](https://wktmap.com).
 The package checks the WKT before sending it, because the API answers unparseable geometry
 with an empty result set and no error.
 
@@ -137,6 +139,24 @@ OBISClient.facet("datasetName"; scientificname = "Abra alba")
 
 `statistics` accepts the same filters as `occurrence` and counts exactly the records that
 query would return, which makes it the cheap way to size a query first.
+
+### Maps without the records
+
+Three endpoints aggregate on the server, so mapping a query of any size costs one request:
+
+```julia
+g = OBISClient.occurrence_grid("Abra alba"; precision = 3)   # records per geohash cell
+g.longitude, g.latitude, g.records                             # cell centres and counts
+
+OBISClient.occurrence_points("Abra alba")     # distinct occupied locations, no counts
+OBISClient.occurrence_centroid("Abra alba")   # (longitude = …, latitude = …), or nothing
+```
+
+`precision` runs from 1 (45° cells) to 8 (cells of a few tens of metres). They take the
+`occurrence` filters except `dropped`, which these endpoints silently ignore, so passing
+it raises an error instead. The grid and points endpoints return at most 100,000 features
+and say nothing when they truncate; the package logs a warning when a result reaches that
+size.
 
 ## Errors
 
