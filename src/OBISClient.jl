@@ -124,7 +124,7 @@ export citations, licenses, obis_citation
 export OBISTable, extra_names, extra_column, cursor
 
 # Configuration and errors.
-export configure!, config, QueryCache, clear_cache!, cache_entries
+export configure!, config, QueryCache, clear_cache!, cache_entries, revalidate_cache
 export OBISError, OBISValidationError, OBISAPIError, OBISNameNotFoundError,
     OBISConnectionError, OBISLargeQueryError
 
