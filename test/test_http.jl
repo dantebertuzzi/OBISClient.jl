@@ -226,3 +226,41 @@ end
     # An unclassified status still gets a sentence rather than an empty message.
     @test OBISClient.http_error_advice(418, "") == "The request failed."
 end
+
+@testset "an over-long URL is refused before it is sent" begin
+    old = OBISClient.TRANSPORT[]
+    sent = Ref(0)
+    OBISClient.TRANSPORT[] = (url, headers, timeout) -> (sent[] += 1; (200, Dict(), "{}"))
+    try
+        # A thousand-vertex ring, as a coastline read from a shapefile would be.
+        pts = [(3 + cos(t), 52 + sin(t)) for t in range(0, 2π; length=1000)]
+        wkt = "POLYGON ((" * join(("$(x) $(y)" for (x, y) in pts), ", ") * "))"
+        err = try
+            OBISClient.statistics("Abra alba"; geometry=wkt)
+            nothing
+        catch e
+            e
+        end
+        @test err isa OBISValidationError
+        @test err.parameter === :geometry
+        @test occursin("bbox", err.message)
+        @test sent[] == 0
+
+        # Another parameter long enough to overflow is refused too, without blaming geometry.
+        err = try
+            OBISClient.statistics(repeat("Abra ", 2000))
+            nothing
+        catch e
+            e
+        end
+        @test err isa OBISValidationError
+        @test err.parameter === :params
+        @test sent[] == 0
+
+        # A polygon of ordinary size is unaffected.
+        OBISClient.statistics("Abra alba"; geometry=OBISClient.bbox(2.0, 51.0, 4.5, 52.5))
+        @test sent[] == 1
+    finally
+        OBISClient.TRANSPORT[] = old
+    end
+end

@@ -73,7 +73,8 @@ recs = OBISClient.occurrence(;
 ```
 
 `OBISClient.bbox(2.0, 51.0, 4.5, 52.5)` writes the same rectangle without the hand-closed
-ring, and splits a box across the antimeridian into a `MULTIPOLYGON`.
+ring, and splits a box across the antimeridian into a `MULTIPOLYGON`. With GeoInterface
+loaded, a polygon from Shapefile.jl, GeoJSON.jl or ArchGDAL can be passed as it is.
 
 To map a query without retrieving it, OBIS aggregates on the server:
 
@@ -169,8 +170,8 @@ and [Internals](https://dantebertuzzi.github.io/OBISClient.jl/stable/internals/)
   empty `Set{String}` when nothing was raised, so `count(fs -> "ON_LAND" in fs, recs.flags)`
   needs no missing-handling.
 - **Tables.jl is the interface.** Installing the client pulls in HTTP, JSON3, StructTypes,
-  Tables and two stdlibs. DataFrames and DuckDB support live in package extensions that
-  load only if you already have them.
+  Tables and two stdlibs. DataFrames, DuckDB and GeoInterface support live in package
+  extensions that load only if you already have them.
 - **Requests are conservative.** Serial, identified by a `User-Agent` naming the package and
   this repository, with exponential backoff that honours `Retry-After`. OBIS asks that
   downloads not be parallelized, so the package doesn't offer it.

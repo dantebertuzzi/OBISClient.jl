@@ -61,6 +61,8 @@ OBISClient.default_transport
 OBISClient.DOWNLOADER
 OBISClient.default_downloader
 OBISClient.http_error_advice
+OBISClient.MAX_URL_LENGTH
+OBISClient.check_url_length
 OBISClient.LAST_REQUEST
 ```
 
@@ -71,6 +73,8 @@ OBISClient.build_params
 OBISClient.QueryParams
 OBISClient.selection_value
 OBISClient.validate_geometry
+OBISClient.geometry_wkt
+OBISClient.geointerface_wkt
 OBISClient.spatial_params
 OBISClient.format_date
 OBISClient.validate_depth

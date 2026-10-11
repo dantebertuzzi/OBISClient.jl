@@ -104,6 +104,41 @@ function validate_geometry(wkt::AbstractString)
 end
 
 """
+    geometry_wkt(geometry) -> String
+
+The WKT to send for a `geometry` filter.
+
+A string is taken as WKT. Anything else is converted by [`geointerface_wkt`](@ref), which
+the GeoInterface extension provides, so a polygon read from a shapefile or GeoJSON can be
+passed as it is.
+"""
+geometry_wkt(wkt::AbstractString) = String(wkt)
+
+function geometry_wkt(geometry)
+    isempty(methods(geointerface_wkt)) && throw(
+        OBISValidationError(
+            :geometry,
+            typeof(geometry),
+            "Pass the geometry as WKT, for example `OBISClient.bbox(west, south, east, " *
+            "north)`. To pass a polygon from Shapefile.jl, GeoJSON.jl, ArchGDAL or any " *
+            "other GeoInterface-compatible package, load GeoInterface first " *
+            "(`using GeoInterface`), which enables the conversion.",
+        ),
+    )
+    return geointerface_wkt(geometry)
+end
+
+"""
+    geointerface_wkt(geometry) -> String
+
+Write a GeoInterface geometry, or the geometry of a GeoInterface feature, as WKT.
+
+Has no methods until GeoInterface is loaded; the `OBISClientGeoInterfaceExt` extension
+supplies them.
+"""
+function geointerface_wkt end
+
+"""
     format_date(name, value) -> String
 
 Render a date as the `YYYY-MM-DD` string the API requires.
@@ -408,7 +443,7 @@ function build_params(;
     sd === nothing || (q["startdepth"] = sd)
     ed === nothing || (q["enddepth"] = ed)
 
-    geometry === nothing || (q["geometry"] = validate_geometry(geometry))
+    geometry === nothing || (q["geometry"] = validate_geometry(geometry_wkt(geometry)))
 
     redlist === nothing || (q["redlist"] = redlist ? "true" : "false")
     hab === nothing || (q["hab"] = hab ? "true" : "false")

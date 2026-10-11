@@ -8,6 +8,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `geometry` accepts any GeoInterface geometry or feature, through a package extension that
+  loads with GeoInterface: a polygon from Shapefile.jl, GeoJSON.jl, ArchGDAL or
+  GeometryBasics is written as WKT, coordinates rounded to six decimals (about 0.1 m).
+- A request URL longer than the API accepts — about 8,000 characters, which a polygon of a
+  few hundred vertices reaches — is refused before it is sent, with an error naming
+  `geometry` and the ways around it. The API's own answer is an HTTP 400 with an empty body,
+  which the client used to report with advice about `page_size`.
+
 - `occurrence_grid`, `occurrence_points` and `occurrence_centroid`, for the server-side
   aggregation endpoints `/occurrence/grid/{precision}`, `/occurrence/points` and
   `/occurrence/centroid`. A map of a query of any size now costs one request instead of a

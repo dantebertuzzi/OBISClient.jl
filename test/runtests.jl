@@ -4,6 +4,7 @@ using JSON3
 using Tables
 using DataFrames
 using DuckDB
+using GeoInterface
 using OBISClient
 
 include("mock.jl")
@@ -35,6 +36,9 @@ include("mock.jl")
     end
     @testset "spatial" begin
         include("test_spatial.jl")
+    end
+    @testset "GeoInterface" begin
+        include("test_geointerface.jl")
     end
     @testset "cache" begin
         include("test_cache.jl")
