@@ -76,6 +76,34 @@ This is the mode to use when re-running a published analysis: it turns "the numb
 and I do not know why" into an error naming the query that was not part of the original
 run.
 
+## Has the data changed since?
+
+The cache keeps what you fetched; it does not say whether OBIS would still give you the
+same thing. `revalidate_cache` asks, one conditional request per entry:
+
+```julia
+using DataFrames
+
+report = OBISClient.revalidate_cache()
+DataFrame(report)[:, [:endpoint, :parameters, :retrieved, :status]]
+```
+
+Each entry is sent with the `ETag` stored beside it. OBIS answers `304 Not Modified` with
+no body when the response would be the same, so checking even a large cache costs little.
+`status` is `:unchanged` or `:changed`, or `:skipped` for entries from another `base_url`
+and `:failed` when a request did not go through.
+
+Nothing is overwritten. The point of the cache is that the old data survives, and an analysis
+re-run against it still reproduces the published numbers; the report tells you whether
+re-running against today's OBIS would not. To move the cache to the current data
+deliberately, for a new version of an analysis:
+
+```julia
+OBISClient.revalidate_cache(; update = true)   # replaces every entry that changed
+```
+
+A read-only cache can be checked but not updated.
+
 ## Citing what you actually used
 
 The access date belongs to the request, so the citation should carry the date the data was
@@ -99,8 +127,9 @@ See [Licensing and citation](licensing.md).
 
 ## What caching does not give you
 
-The cache pins the *responses*, not the OBIS database. It does not tell you what changed
-upstream, and it cannot reconstruct a query you never ran. If reproducibility matters for a
+The cache pins the *responses*, not the OBIS database. `revalidate_cache` tells you *that*
+a response changed upstream, not what changed in it, and the cache cannot reconstruct a
+query you never ran. If reproducibility matters for a
 piece of work:
 
 - cache every query the analysis makes, from the start;
