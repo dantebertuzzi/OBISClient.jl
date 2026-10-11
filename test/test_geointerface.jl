@@ -36,8 +36,7 @@ import GeoInterface as GI
         GI.MultiLineString([[(0.0, 0.0), (1.0, 1.0)], [(2.0, 2.0), (3.0, 3.0)]])
     ) == "MULTILINESTRING ((0.0 0.0, 1.0 1.0), (2.0 2.0, 3.0 3.0))"
     @test OBISClient.geometry_wkt(GI.GeometryCollection([GI.Point(1.0, 2.0), box])) ==
-        "GEOMETRYCOLLECTION (POINT (1.0 2.0), " * OBISClient.geometry_wkt(box)[1:end] *
-          ")"
+        "GEOMETRYCOLLECTION (POINT (1.0 2.0), " * OBISClient.geometry_wkt(box) * ")"
 
     @test_throws OBISValidationError OBISClient.build_params(; geometry=42)
 end
