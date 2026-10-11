@@ -336,6 +336,20 @@ Note that `DEPTH_EXCEEDS_BATH` and `DEPTH_OUT_OF_RANGE` are not necessarily erro
 manual says a measured depth may legitimately be more accurate than the GEBCO bathymetry
 the check is based on.
 
+### 3.6 The query string has a length limit
+
+The API sits behind a server that refuses request URLs longer than about **8,060
+characters** with an **HTTP 400 and an empty body**. Found by bisection on `/statistics`
+(8,060 accepted, 8,066 refused) and by polygons: a 300-vertex ring (a 7.9 kB URL) works, a
+500-vertex one (13 kB) is refused, and at 100 kB the refusal becomes a 414 with an HTML
+page. **(observed 2026-10-10.)**
+
+`geometry` is the only parameter that grows this long in practice, and the regions people
+start from — coastlines, EEZs, marine ecoregions read from a shapefile — routinely run to
+thousands of vertices. The API offers no POST alternative. The client therefore checks the
+URL length before sending and names `geometry` in the error, with the ways out:
+simplifying, querying the bounding box and filtering locally, or using an `areaid`.
+
 ## 4. Pagination
 
 `/occurrence` uses keyset pagination on the record UUID.

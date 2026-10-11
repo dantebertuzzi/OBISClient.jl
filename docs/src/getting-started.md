@@ -36,6 +36,23 @@ Build any other shape interactively at [wktmap.com](https://wktmap.com).
 The package checks the WKT before sending it, because the API answers unparseable geometry
 with an empty result set and no error.
 
+With GeoInterface loaded, `geometry` also takes a geometry or feature from any package that
+implements it — Shapefile.jl, GeoJSON.jl, ArchGDAL, GeometryBasics — and writes the WKT for
+you:
+
+```julia
+using GeoInterface, GeoJSON
+
+regions = GeoJSON.read(read("regions.geojson", String))
+OBISClient.occurrence("Abra alba"; geometry = regions[1])   # the first feature's polygon
+```
+
+The whole polygon travels in the URL, and the API refuses URLs over about 8,000
+characters, a few hundred vertices. A detailed coastline or EEZ will not fit; the package
+says so before sending. Simplify it, query its bounding box (`GeoInterface.extent` gives
+the corners for `bbox`) and filter the records locally, or use an `areaid` if OBIS already
+knows the region.
+
 ### Selecting record classes
 
 `absence`, `dropped` and `event` take `:exclude` (the default), `:include`, or `:only`.

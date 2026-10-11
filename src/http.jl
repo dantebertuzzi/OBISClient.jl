@@ -84,6 +84,50 @@ function build_url(endpoint::AbstractString, params::QueryParams; base_url::Abst
 end
 
 """
+    MAX_URL_LENGTH
+
+Longest request URL the API accepts, in characters. Beyond about 8,060 it answers HTTP 400
+with an empty body (NOTES.md section 3.6), which says nothing about why.
+"""
+const MAX_URL_LENGTH = 8000
+
+"""
+    check_url_length(url, params)
+
+Refuse a URL the API would reject for its length, naming the parameter that made it long.
+
+In practice that is always `geometry`: a coastline or an EEZ read from a shapefile runs to
+thousands of vertices, and every one travels in the query string.
+"""
+function check_url_length(url::AbstractString, params::QueryParams)
+    n = length(url)
+    n <= MAX_URL_LENGTH && return nothing
+    if haskey(params, "geometry")
+        wkt = get(params, "geometry", "")
+        throw(
+            OBISValidationError(
+                :geometry,
+                string(first(wkt, 60), "…"),
+                "The geometry makes the request URL $(n) characters long, and the API " *
+                "rejects URLs over about $(MAX_URL_LENGTH) with an empty HTTP 400. " *
+                "Simplify the polygon to a few hundred vertices (GeometryOps.simplify, or " *
+                "a GIS), query its bounding box with `OBISClient.bbox` and filter the " *
+                "records locally, or use an `areaid` if OBIS already knows the region " *
+                "(`OBISClient.area()`).",
+            ),
+        )
+    end
+    throw(
+        OBISValidationError(
+            :params,
+            nothing,
+            "The request URL is $(n) characters long, and the API rejects URLs over about " *
+            "$(MAX_URL_LENGTH). Shorten the longest parameters.",
+        ),
+    )
+end
+
+"""
     request_headers(cfg) -> Vector{Pair{String,String}}
 
 Headers sent on every request.
@@ -162,6 +206,7 @@ function raw_request(
     endpoint::AbstractString, params::QueryParams; cfg::ClientConfig=CONFIG
 )
     url = build_url(endpoint, params; base_url=cfg.base_url)
+    check_url_length(url, params)
     headers = request_headers(cfg)
     transport = TRANSPORT[] === nothing ? default_transport : TRANSPORT[]
 
