@@ -152,7 +152,7 @@ OBISClient.occurrence_points("Abra alba")     # distinct occupied locations, no 
 OBISClient.occurrence_centroid("Abra alba")   # (longitude = …, latitude = …), or nothing
 ```
 
-`precision` runs from 1 (45° cells) to 8 (cells of a few tens of metres). They take the
+`precision` runs from 1 (45° cells) to 12 (cells of a few centimetres). They take the
 `occurrence` filters except `dropped`, which these endpoints silently ignore, so passing
 it raises an error instead. The grid and points endpoints return at most 100,000 features
 and say nothing when they truncate; the package logs a warning when a result reaches that
