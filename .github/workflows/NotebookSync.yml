@@ -1,0 +1,41 @@
+name: Notebook sync
+
+# notebooks/obis-missingness.ipynb is committed here and in MissingPatterns.jl, since it
+# belongs to both packages. Nothing keeps the two copies in step except this check: it
+# fails when they differ, on any pull request that touches this copy and weekly, which
+# catches a change made on the other side.
+
+on:
+  pull_request:
+    paths:
+      - notebooks/obis-missingness.ipynb
+      - .github/workflows/NotebookSync.yml
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    name: Same as MissingPatterns.jl
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NOTEBOOK: notebooks/obis-missingness.ipynb
+      OTHER: https://raw.githubusercontent.com/dantebertuzzi/MissingPatterns.jl/main/notebooks/obis-missingness.ipynb
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare the two copies
+        run: |
+          curl --fail --silent --show-error --retry 3 --output other.ipynb "$OTHER"
+          if cmp --silent "$NOTEBOOK" other.ipynb; then
+            echo "The two copies are identical."
+            exit 0
+          fi
+          echo "::error file=$NOTEBOOK::This notebook differs from the copy in MissingPatterns.jl. Copy whichever is newer over the other."
+          # The cells' sources, so the log shows what diverged without the outputs' noise.
+          sources() { jq -r '.cells[] | "--- \(.cell_type)\n\(.source | join(""))"' "$1"; }
+          diff <(sources other.ipynb) <(sources "$NOTEBOOK") || true
+          exit 1

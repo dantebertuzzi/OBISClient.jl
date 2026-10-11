@@ -32,7 +32,8 @@ All notable changes to this project are documented here. The format follows
   absent from a pull of records: which fields go missing together, what complete-case analysis
   would cost, and how a 3000-record sample compares with OBIS's own per-field counts for the
   whole query. The same notebook is committed in the MissingPatterns.jl repository, since it
-  belongs to both packages; the two copies have to be kept in step by hand.
+  belongs to both packages. A `Notebook sync` workflow fails when the two copies differ, on
+  pull requests that touch this one and weekly.
 - `notebooks/descriptive-statistics.ipynb`, a descriptive pass over a live pull of Atlantic cod
   records, with CairoMakie figures on the palette `examples/theme.jl` gives the package's own
   maps. It covers position, spread and skew for the numeric columns, the shapes behind those
