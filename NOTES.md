@@ -167,9 +167,10 @@ Probed on 2026-10-10.
 - **`/occurrence/grid/{precision}`** returns a GeoJSON `FeatureCollection` of square
   `Polygon` cells, each with `properties.n`, the record count. Cells are geohash cells
   (precision 2: 11.25° × 5.625°; precision 3: 1.40625° square). **(observed)**
-  - Precision 1–8 work. **Precision 0 is HTTP 500** with an Elasticsearch parse error, and
-    **precision 9 and above return an empty `features` array with HTTP 200** — the
-    silent-empty failure again, so the client validates the range.
+  - Precision 1–12 work, the range of Elasticsearch's `geohash_grid`. **Precision 0 is
+    HTTP 500** and **13 and above an HTTP 200 carrying an `error` field**, both naming the
+    parse failure; the client validates the range to say what to pass instead. (A first
+    probe read precision 9 as silently empty; it had used a polygon holding no records.)
   - The counts honour the occurrence filters: the sum of `n` equals `/statistics.records`
     for `scientificname` alone, with `startdate`, with `absence=true` and with
     `flags=ON_LAND`.

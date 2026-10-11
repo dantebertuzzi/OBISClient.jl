@@ -142,6 +142,37 @@ OBISClient.configure!(; request_gap=0.5, page_size=5)
         end
     end
 
+    @testset "the spatial endpoints still behave as NOTES.md 2.3 records" begin
+        # The grid counts the records statistics counts, under the filters it honours.
+        for kwargs in (
+            (; scientificname="Abra alba"),
+            (; scientificname="Abra alba", startdate=Date(2000, 1, 1)),
+            (; scientificname="Abra alba", absence=:only),
+        )
+            g = OBISClient.occurrence_grid(; precision=2, kwargs...)
+            @test sum(g.records) == OBISClient.statistics(; kwargs...)["records"]
+        end
+
+        # `dropped` is still ignored. If this starts failing, OBIS has fixed it and the
+        # refusal in `spatial_params` can go.
+        params = OBISClient.build_params(; scientificname="Abra alba", dropped=:only)
+        payload = OBISClient.api_get("occurrence/grid/2", params)
+        @test isempty(payload[:features])
+        @test OBISClient.statistics("Abra alba"; dropped=:only)["records"] > 0
+
+        # Precision 12 is still the finest the grid serves; 13 is still an error.
+        params = OBISClient.build_params(; scientificname="Abra alba")
+        @test !isempty(OBISClient.api_get("occurrence/grid/12", params)[:features])
+        @test_throws OBISClient.OBISAPIError OBISClient.api_get(
+            "occurrence/grid/13", params
+        )
+
+        c = OBISClient.occurrence_centroid("Abra alba")
+        @test c !== nothing
+        @test OBISClient.occurrence_centroid("Abra alba"; startdate=Date(2100, 1, 1)) ===
+            nothing
+    end
+
     @testset "undocumented endpoints that the package relies on" begin
         # `/node` as a list is not in the API specification but is used by `OBISClient.node()`.
         nodes = OBISClient.node()

@@ -34,7 +34,7 @@ end
     end
 
     @test_throws OBISValidationError OBISClient.occurrence_grid("Abra alba"; precision=0)
-    @test_throws OBISValidationError OBISClient.occurrence_grid("Abra alba"; precision=9)
+    @test_throws OBISValidationError OBISClient.occurrence_grid("Abra alba"; precision=13)
     # The endpoint ignores `dropped`, so asking for it is refused before any request.
     @test_throws OBISValidationError OBISClient.occurrence_grid(
         "Abra alba"; precision=2, dropped=:include

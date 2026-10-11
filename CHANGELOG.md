@@ -13,9 +13,9 @@ All notable changes to this project are documented here. The format follows
   `/occurrence/centroid`. A map of a query of any size now costs one request instead of a
   full pull. The grid comes back as an `OBISTable` with one row per geohash cell — bounds,
   centre and record count — and the points as a table of longitudes and latitudes. The
-  endpoints ignore the `dropped` filter without saying so, return an empty grid for a
-  precision above 8, and cut results at 100,000 features silently; the client refuses
-  `dropped`, validates the precision and warns at the cap. The centroid is `nothing` when no
+  endpoints ignore the `dropped` filter without saying so and cut results at 100,000
+  features silently; the client refuses `dropped`, checks the precision against the 1–12
+  the API serves, and warns at the cap. The centroid is `nothing` when no
   record matches, the case the endpoint answers with an empty body.
 - `bbox(west, south, east, north)`, which writes the WKT for a rectangle with its ring
   closed, and splits a box that crosses the antimeridian into a `MULTIPOLYGON`.

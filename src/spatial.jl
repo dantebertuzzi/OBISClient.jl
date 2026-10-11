@@ -18,10 +18,11 @@ const GRID_FEATURE_CAP = 100_000
 """
     GRID_PRECISIONS
 
-Geohash precisions `/occurrence/grid` serves. Precision 0 is a server error, and anything
-above 8 returns an empty grid with HTTP 200, which would read as "no records".
+Geohash precisions `/occurrence/grid` serves: 1 to 12, the range of the search index
+behind it. Anything outside is a server error naming the parse failure, which this range
+check replaces with one that says what to pass instead.
 """
-const GRID_PRECISIONS = 1:8
+const GRID_PRECISIONS = 1:12
 
 """
     bbox(west, south, east, north) -> String
@@ -124,8 +125,8 @@ One request maps a query of any size, which is the cheap way to draw a distribut
 effort surface without retrieving the records. Takes the filters of
 [`occurrence`](@ref) except `dropped`, which the endpoint ignores.
 
-`precision` is the geohash length, from 1 (cells of 45° × 45°) to 8 (about 0.0003°). Each
-step up makes cells 32 times smaller in area. Precision 3 cells are 1.4° square, a
+`precision` is the geohash length, from 1 (cells of 45° × 45°) to 12 (a few centimetres).
+Each step up makes cells 32 times smaller in area. Precision 3 cells are 1.4° square, a
 reasonable start for a regional map.
 
 The table has one row per cell with at least one record, with columns:
@@ -150,8 +151,8 @@ function occurrence_grid(scientificname=nothing; precision::Integer, kwargs...)
             :precision,
             precision,
             "Use a geohash precision from $(first(GRID_PRECISIONS)) to " *
-            "$(last(GRID_PRECISIONS)). The API fails at 0 and returns an empty grid above " *
-            "$(last(GRID_PRECISIONS)), which would look like an absence of records.",
+            "$(last(GRID_PRECISIONS)), the geohash lengths the API serves. Precision 3 " *
+            "cells are 1.4° square; each step up makes them 32 times smaller.",
         ),
     )
     endpoint = "occurrence/grid/$(precision)"
