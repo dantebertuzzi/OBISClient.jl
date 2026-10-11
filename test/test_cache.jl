@@ -191,3 +191,34 @@ end
         end
     end
 end
+
+@testset "revalidation skips other services and reports failures" begin
+    mktempdir() do dir
+        cache = OBISClient.QueryCache(dir)
+        params = OBISClient.build_params(; scientificname="Abra alba")
+        OBISClient.store_body!(cache, "statistics", params, """{"records":10}""", Dict())
+        OBISClient.store_body!(cache, "checklist", params, """{"total":0}""", Dict())
+
+        # An entry fetched from another deployment is not compared against this one.
+        stats_key = OBISClient.cache_key(
+            "statistics", params; base_url=OBISClient.config().base_url
+        )
+        meta = joinpath(dir, stats_key * ".meta.json")
+        m = copy(JSON3.read(read(meta, String), Dict{String,Any}))
+        m["base_url"] = "https://api.example.org/v3/"
+        write(meta, JSON3.write(m))
+
+        old_transport = OBISClient.TRANSPORT[]
+        try
+            # A failure on one entry is reported, and the others are still checked.
+            OBISClient.TRANSPORT[] =
+                (url, headers, timeout) -> (404, Dict{String,String}(), "not here")
+            report = @test_logs (:warn,) OBISClient.revalidate_cache(cache)
+            status = Dict(r.endpoint => r.status for r in report)
+            @test status["statistics"] === :skipped
+            @test status["checklist"] === :failed
+        finally
+            OBISClient.TRANSPORT[] = old_transport
+        end
+    end
+end
