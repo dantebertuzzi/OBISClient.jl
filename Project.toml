@@ -1,7 +1,7 @@
 name = "OBISClient"
 uuid = "bf4f0d90-9197-4e1e-85a0-d7f577e5c8e6"
 authors = ["Dante Bertuzzi <dantebertuzzi@users.noreply.github.com>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
