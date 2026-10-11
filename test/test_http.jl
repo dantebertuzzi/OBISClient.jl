@@ -246,6 +246,17 @@ end
         @test occursin("bbox", err.message)
         @test sent[] == 0
 
+        # Another parameter long enough to overflow is refused too, without blaming geometry.
+        err = try
+            OBISClient.statistics(repeat("Abra ", 2000))
+            nothing
+        catch e
+            e
+        end
+        @test err isa OBISValidationError
+        @test err.parameter === :params
+        @test sent[] == 0
+
         # A polygon of ordinary size is unaffected.
         OBISClient.statistics("Abra alba"; geometry=OBISClient.bbox(2.0, 51.0, 4.5, 52.5))
         @test sent[] == 1
