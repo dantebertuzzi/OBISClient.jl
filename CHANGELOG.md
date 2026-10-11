@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-11
+
+Maps without the records, region polygons from the Julia geospatial ecosystem, and a way to
+ask whether the data behind a cached analysis has changed upstream.
+
 ### Added
 
 - `geometry` accepts any GeoInterface geometry or feature, through a package extension that

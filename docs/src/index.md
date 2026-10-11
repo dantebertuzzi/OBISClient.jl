@@ -154,7 +154,7 @@ GitHub's "Cite this repository" button reads, and a
   title   = {{OBISClient.jl}: a {Julia} client for the {Ocean} {Biodiversity}
              {Information} {System}},
   year    = {2026},
-  version = {0.1.0},
+  version = {0.2.0},
   url     = {https://github.com/dantebertuzzi/OBISClient.jl},
   note    = {Julia package}
 }
