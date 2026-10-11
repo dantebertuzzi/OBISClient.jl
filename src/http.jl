@@ -194,20 +194,27 @@ function throttle!(cfg::ClientConfig)
 end
 
 """
-    raw_request(endpoint, params; cfg) -> (body::String, headers::Dict)
+    raw_request(endpoint, params; cfg, headers = []) -> (body::String, headers::Dict, status::Int)
 
 Perform one request with retries and backoff, returning the raw response body.
+
+`headers` are sent in addition to the usual ones; [`revalidate_cache`](@ref) uses them for
+`If-None-Match`, and reads the status to tell a `304 Not Modified` from a response whose
+body happens to be empty.
 
 Raises [`OBISConnectionError`](@ref) when the retry budget is exhausted and
 [`OBISAPIError`](@ref) for a permanent failure. Response *content* is not inspected here;
 that is [`check_response`](@ref)'s job.
 """
 function raw_request(
-    endpoint::AbstractString, params::QueryParams; cfg::ClientConfig=CONFIG
+    endpoint::AbstractString,
+    params::QueryParams;
+    cfg::ClientConfig=CONFIG,
+    headers=Pair{String,String}[],
 )
     url = build_url(endpoint, params; base_url=cfg.base_url)
     check_url_length(url, params)
-    headers = request_headers(cfg)
+    headers = vcat(request_headers(cfg), headers)
     transport = TRANSPORT[] === nothing ? default_transport : TRANSPORT[]
 
     last_message = "no response"
@@ -238,7 +245,7 @@ function raw_request(
         end
 
         if status < 400
-            return body, resp_headers
+            return body, resp_headers, Int(status)
         end
 
         last_status, last_body = status, body
@@ -337,7 +344,7 @@ function api_get(
 )
     body = cached_body(cfg.cache, endpoint, params)
     if body === nothing
-        body, headers = raw_request(endpoint, params; cfg=cfg)
+        body, headers, _ = raw_request(endpoint, params; cfg=cfg)
         store_body!(cfg.cache, endpoint, params, body, headers)
     end
     allow_empty && isempty(strip(body)) && return nothing

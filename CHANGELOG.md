@@ -15,7 +15,11 @@ All notable changes to this project are documented here. The format follows
   few hundred vertices reaches — is refused before it is sent, with an error naming
   `geometry` and the ways around it. The API's own answer is an HTTP 400 with an empty body,
   which the client used to report with advice about `page_size`.
-
+- `revalidate_cache`, which asks OBIS whether the data behind each cache entry has changed
+  since it was fetched. Each entry is re-requested with its stored `ETag`, so an unchanged
+  one costs a `304 Not Modified` and no body; entries without a tag are compared byte for
+  byte. It reports `:unchanged` or `:changed` per entry and overwrites nothing unless asked
+  with `update = true`, since keeping the old data is what the cache is for.
 - `occurrence_grid`, `occurrence_points` and `occurrence_centroid`, for the server-side
   aggregation endpoints `/occurrence/grid/{precision}`, `/occurrence/points` and
   `/occurrence/centroid`. A map of a query of any size now costs one request instead of a

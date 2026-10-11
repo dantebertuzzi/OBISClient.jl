@@ -125,6 +125,7 @@ OBISClient.configure!
 OBISClient.ClientConfig
 OBISClient.QueryCache
 OBISClient.cache_entries
+OBISClient.revalidate_cache
 OBISClient.clear_cache!
 OBISClient.default_cache_dir
 OBISClient.package_version

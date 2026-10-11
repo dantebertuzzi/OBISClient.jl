@@ -192,3 +192,104 @@ function clear_cache!(cache=CONFIG.cache)
     end
     return n
 end
+
+"""
+    revalidate_cache(cache = config().cache; update = false) -> Vector{NamedTuple}
+
+Ask OBIS, entry by entry, whether the data a cache holds has changed since it was fetched.
+
+Each entry is re-requested with its stored `ETag` in `If-None-Match`. An unchanged response
+costs a `304 Not Modified` and no body, so checking a large cache is cheap. Where the server
+does send a body, it is compared with the stored one byte for byte, so an entry is reported
+`:changed` only when its data really differs.
+
+The cache itself is left alone unless `update = true`, which overwrites each changed entry
+with the current response and its new retrieval date. That gives up the old data, which is
+the cache's whole purpose, so it is never the default: a re-run that should reproduce a
+published result wants to know that the data moved, not to follow it.
+
+Returns one row per entry, with `key`, `endpoint`, `parameters`, `retrieved` (when the stored
+copy was fetched) and `status`, one of:
+
+  - `:unchanged` — OBIS would return the same body today;
+  - `:changed` — it would not (and, with `update = true`, the entry now holds the new one);
+  - `:skipped` — the entry was fetched from a different `base_url` than the one configured;
+  - `:failed` — the request failed, with the reason logged as a warning.
+
+The result is a Tables.jl row table, so `DataFrame(revalidate_cache())` works.
+
+```julia
+julia> OBISClient.configure!(cache = OBISClient.QueryCache("data/obis-cache"));
+
+julia> report = OBISClient.revalidate_cache();
+
+julia> [r.endpoint for r in report if r.status === :changed]
+1-element Vector{String}:
+ "occurrence"
+```
+"""
+function revalidate_cache(cache=CONFIG.cache; update::Bool=false)
+    cache === nothing && throw(
+        OBISValidationError(
+            :cache,
+            nothing,
+            "No cache is configured. Pass one, or set it with " *
+            "`OBISClient.configure!(cache = OBISClient.QueryCache(dir))`.",
+        ),
+    )
+    update && cache.readonly &&
+        throw(
+            OBISValidationError(
+                :update,
+                true,
+                "The cache is read-only, so its entries cannot be replaced. Open it with " *
+                "`readonly = false` to update it, or revalidate without `update` to only report.",
+            ),
+        )
+
+    Row = @NamedTuple{
+        key::String,
+        endpoint::String,
+        parameters::Dict{String,String},
+        retrieved::String,
+        status::Symbol,
+    }
+    out = Row[]
+    for e in cache_entries(cache)
+        key = String(e["key"])
+        endpoint = String(e["endpoint"])
+        parameters = Dict{String,String}(
+            String(k) => String(string(v)) for (k, v) in get(e, "parameters", Dict())
+        )
+        retrieved = String(string(get(e, "retrieved", "")))
+        row(status) = Row((key, endpoint, parameters, retrieved, status))
+
+        if String(string(get(e, "base_url", CONFIG.base_url))) != CONFIG.base_url
+            push!(out, row(:skipped))
+            continue
+        end
+
+        params = QueryParams()
+        for (k, v) in sort!(collect(parameters); by=first)
+            params[k] = v
+        end
+        etag = String(string(get(e, "etag", "")))
+        extra = isempty(etag) ? Pair{String,String}[] : ["If-None-Match" => etag]
+
+        body, headers, status = try
+            raw_request(endpoint, params; headers=extra)
+        catch err
+            err isa OBISError || rethrow()
+            @warn "Could not revalidate a cache entry" endpoint parameters err
+            push!(out, row(:failed))
+            continue
+        end
+        if status == 304 || body == read(entry_path(cache, key), String)
+            push!(out, row(:unchanged))
+            continue
+        end
+        update && store_body!(cache, endpoint, params, body, headers)
+        push!(out, row(:changed))
+    end
+    return out
+end
