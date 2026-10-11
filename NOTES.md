@@ -41,7 +41,11 @@ and parameter names.
   `Accept-Encoding: gzip` on `/occurrence?size=100` returns `Content-Encoding: gzip`.)**
 - Responses carry a weak `ETag` and pass through a cache layer (`X-Cache-Status`,
   `X-Cache-Date`). **(observed on `/statistics`.)** Useful for conditional revalidation of
-  a local cache.
+  a local cache, and it works: `If-None-Match` with the stored tag returns
+  `304 Not Modified` on `/statistics` and `/occurrence`, with or without gzip, and a
+  mismatched tag returns 200. The tag is content-derived — its hex prefix is the body length
+  (`W/"1522-…"` on a 5,410-byte body) — so a 304 means the body is unchanged. **(observed
+  2026-10-10.)**
 - There are no rate-limit headers and no API-version header in the response. There is no
   documented request quota.
 

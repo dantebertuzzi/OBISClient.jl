@@ -105,3 +105,89 @@ end
         @test OBISClient.cache_entries(cache) == Dict{String,Any}[]
     end
 end
+
+# A server whose data can be changed between requests: it answers `If-None-Match` with a
+# 304 while the body is the one the tag was computed from, as OBIS does.
+function revalidation_transport(bodies::Dict{String,String}, sent::Vector)
+    return function (url, headers, timeout)
+        body = bodies[split(url, '?')[1]]
+        etag = string("W/\"", hash(body), "\"")
+        inm = [v for (k, v) in headers if k == "If-None-Match"]
+        push!(sent, isempty(inm) ? nothing : only(inm))
+        !isempty(inm) && only(inm) == etag && return (304, Dict("etag" => etag), "")
+        return (200, Dict("etag" => etag), body)
+    end
+end
+
+@testset "revalidation reports what changed, and keeps the old data" begin
+    base = OBISClient.config().base_url
+    bodies = Dict(
+        base * "statistics" => """{"records":10}""",
+        base * "statistics/years" => """[{"year":2000,"records":10}]""",
+    )
+    sent = Any[]
+    mktempdir() do dir
+        cache = OBISClient.QueryCache(dir)
+        old_cache = OBISClient.config().cache
+        old_transport = OBISClient.TRANSPORT[]
+        try
+            OBISClient.configure!(; cache=cache)
+            OBISClient.TRANSPORT[] = revalidation_transport(bodies, sent)
+            OBISClient.statistics("Abra alba")
+            OBISClient.statistics_years("Abra alba")
+
+            # Nothing changed: every entry is checked with its tag and costs a 304.
+            empty!(sent)
+            report = OBISClient.revalidate_cache(cache)
+            @test length(report) == 2
+            @test all(r -> r.status === :unchanged, report)
+            @test all(!isnothing, sent)
+            @test Tables.istable(report)
+            @test only(unique(r.parameters for r in report)) ==
+                Dict("scientificname" => "Abra alba")
+
+            # OBIS ingests new records; one endpoint's answer moves.
+            bodies[base * "statistics"] = """{"records":11}"""
+            report = OBISClient.revalidate_cache(cache)
+            status = Dict(r.endpoint => r.status for r in report)
+            @test status["statistics"] === :changed
+            @test status["statistics/years"] === :unchanged
+            # Reporting is all it did: the analysis still sees the data it was built on.
+            @test OBISClient.statistics("Abra alba")["records"] == 10
+
+            # Updating is explicit, and then the cache follows the service.
+            OBISClient.revalidate_cache(cache; update=true)
+            @test OBISClient.statistics("Abra alba")["records"] == 11
+            @test all(r -> r.status === :unchanged, OBISClient.revalidate_cache(cache))
+
+            # A read-only cache can be checked but not overwritten.
+            ro = OBISClient.QueryCache(dir; readonly=true)
+            @test length(OBISClient.revalidate_cache(ro)) == 2
+            @test_throws OBISValidationError OBISClient.revalidate_cache(ro; update=true)
+        finally
+            OBISClient.configure!(; cache=old_cache)
+            OBISClient.TRANSPORT[] = old_transport
+        end
+    end
+    @test_throws OBISValidationError OBISClient.revalidate_cache(nothing)
+end
+
+@testset "an entry without a tag is compared by its body" begin
+    base = OBISClient.config().base_url
+    mktempdir() do dir
+        cache = OBISClient.QueryCache(dir)
+        params = OBISClient.build_params(; scientificname="Abra alba")
+        OBISClient.store_body!(cache, "statistics", params, """{"records":10}""", Dict())
+        old_transport = OBISClient.TRANSPORT[]
+        try
+            OBISClient.TRANSPORT[] =
+                (url, headers, timeout) -> begin
+                    @test !any(k == "If-None-Match" for (k, _) in headers)
+                    return (200, Dict{String,String}(), """{"records":10}""")
+                end
+            @test only(OBISClient.revalidate_cache(cache)).status === :unchanged
+        finally
+            OBISClient.TRANSPORT[] = old_transport
+        end
+    end
+end

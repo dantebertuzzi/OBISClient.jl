@@ -8,6 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `revalidate_cache`, which asks OBIS whether the data behind each cache entry has changed
+  since it was fetched. Each entry is re-requested with its stored `ETag`, so an unchanged
+  one costs a `304 Not Modified` and no body; entries without a tag are compared byte for
+  byte. It reports `:unchanged` or `:changed` per entry and overwrites nothing unless asked
+  with `update = true`, since keeping the old data is what the cache is for.
+
 - `occurrence_grid`, `occurrence_points` and `occurrence_centroid`, for the server-side
   aggregation endpoints `/occurrence/grid/{precision}`, `/occurrence/points` and
   `/occurrence/centroid`. A map of a query of any size now costs one request instead of a
